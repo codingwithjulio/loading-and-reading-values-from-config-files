@@ -1,9 +1,52 @@
 #include <iostream>
 #include <SDL2/SDL.h>
 
+#include <fstream>
+
+#define CONFIG_FILE_PATH "./config/game.config"
+
+uint screen_width;
+uint screen_height;
+
+bool LoadGameConfiration()
+{
+  std::ifstream in(CONFIG_FILE_PATH);
+
+  if (!in.is_open())
+  {
+    SDL_Log("Cannot open configuration file from %s: %s", CONFIG_FILE_PATH, strerror(errno));
+    return false;
+  }
+
+  std::string param;
+  uint value;
+
+  while (!in.eof())
+  {
+    in >> param;
+    in >> value;
+
+    if (param == "SCREEN_WIDTH")
+    {
+      screen_width = value;
+    }
+    else if (param == "SCREEN_HEIGHT")
+    {
+      screen_height = value;
+    }
+  }
+
+  in.close();
+
+  // Log the loaded configuration
+  SDL_Log("Game configuration:");
+  SDL_Log("   SCREEN_WIDTH  : %d", screen_width);
+  SDL_Log("   SCREEN_HEIGHT : %d", screen_height);
+
+  return true;
+}
+
 // Graphics
-const int WINDOW_WIDTH = 512;
-const int WINDOW_HEIGHT = 284;
 SDL_Window* g_main_window;
 SDL_Renderer* g_main_renderer;
 
@@ -26,12 +69,18 @@ static bool Init()
     return EXIT_FAILURE;
   }
 
+  if (!LoadGameConfiration())
+  {
+    SDL_Quit();
+    return EXIT_FAILURE;
+  };
+
   g_main_window = SDL_CreateWindow(
-    "Creating a Window (512x284)",
+    "Creating a Window",
     SDL_WINDOWPOS_CENTERED,
     SDL_WINDOWPOS_CENTERED,
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
+    screen_width,
+    screen_height,
     SDL_WINDOW_OPENGL
   );
 
